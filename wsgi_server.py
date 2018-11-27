@@ -1,5 +1,6 @@
 import socket
 import sys, os
+import StringIO
 
 class WSGIServer(object):
 
