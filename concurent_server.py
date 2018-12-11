@@ -26,6 +26,20 @@ def grim_reaper(signum, frame):
     )
 
 
+def grim_reaper_2(signum, frame):
+    while True:
+        try:
+            pid, status = os.waitpid(
+                -1,         # Wait for any child process
+                os.WNOHANG  # Do not block and return EWOULDBLOCK error
+            )
+        except OSError:
+            return
+
+        if pid == 0: # No more Zombies
+            return
+
+
 def handle_request(client_connection):
     request = client_connection.recv(1024)
     print(request.decode())
@@ -54,7 +68,8 @@ def serve_forever():
     print('Serving HTTP on port {port} ...'.format(port=PORT))
     #print('Parent PID (PPID): {pid}\n'.format(pid=os.getpid()))
 
-    signal.signal(signal.SIGCHLD, grim_reaper)
+    # grim_reaper add signal handler for 1 child process while grim_reaper_2 add event queue for multiple processes
+    signal.signal(signal.SIGCHLD, grim_reaper_2)
 
     clients = []
     while True:
@@ -64,6 +79,7 @@ def serve_forever():
             code, msg = e.args
             # restart 'accept' if it was interrupted
             if code == errno.EINTR:
+                print('Ignore EINTR error when SIGCHILD interrupt "accept" listen socket')
                 continue
             else:
                 raise
